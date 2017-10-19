@@ -34,13 +34,14 @@ for m in "${submeshes[@]}"; do
   if [ ! -d "${path_to_run_directory}/${m}" ]; then
     mkdir ${path_to_run_directory}/${m}
   fi
+  echo "Submitting script for mesh with ${m} partitions"
 
   #go to script dir to all for relative paths to work
   cd ${script_dir}
   cd ${path_to_run_directory}/${m}
   job_name="gen_${m}"
 
-  commands="${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${m} ${m}"
+  commands="cd ${path_to_mesh_locations}/${m}"$'\n'"${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${m} ${m}"
 
   submit_peano_serial "${job_name}" 24:00:00 "${commands}"
 done
