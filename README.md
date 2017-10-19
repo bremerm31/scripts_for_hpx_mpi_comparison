@@ -1,1 +1,2 @@
-# scripts_for_hpx_mpi_comparison
+# Scripts for HPX/MPI Comparison
+
