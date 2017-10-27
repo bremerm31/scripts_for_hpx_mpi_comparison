@@ -43,7 +43,7 @@ for m in "${submeshes[@]}"; do
 
   commands="cd ${path_to_mesh_locations}/${m}"$'\n'"${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${m} ${m}"
 
-  submit_peano_serial "${job_name}" 24:00:00 "${commands}"
+  submit_stampede2_serial "${job_name}" 24:00:00 "${commands}"
 done
 
 cd ${script_dir}

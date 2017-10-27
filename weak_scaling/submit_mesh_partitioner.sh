@@ -66,7 +66,7 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
 
 
   echo "Submitting script for meshpartitioning with m = ${submeshes[i]}"
-  submit_peano_serial "${job_name}" 24:00:00 "${commands}"
+  submit_stampede2_serial "${job_name}" 24:00:00 "${commands}"
 done
 
 cd ${script_dir}
