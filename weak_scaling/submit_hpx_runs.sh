@@ -48,8 +48,8 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   cd ${path_to_run_directory}/${m}
   job_name="dgswemv2_hpx_${m}"
 
-  args="${input_file_name}"
-  commands="${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_HPX ${input_file_name}"
+  args="${parallelized_file_name} --hpx:threads=68"
+  commands="ibrun ${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_HPX ${args}"
 
 
   echo "Submitting script for hpx run with m = ${submeshes[i]}"
