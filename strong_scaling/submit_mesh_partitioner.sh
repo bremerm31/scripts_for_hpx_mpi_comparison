@@ -62,7 +62,7 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   commands="${path_to_build_tree}/partitioner/partitioner ${args}"
 
 
-  echo "Submitting script for meshpartitioning with m = ${n}"
+  echo "Submitting script for mesh partitioning with n = ${n}"
   submit_stampede2_serial "${job_name}" 24:00:00 "${commands}"
 done
 
