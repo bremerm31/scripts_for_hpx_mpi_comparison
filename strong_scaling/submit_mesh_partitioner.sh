@@ -71,6 +71,9 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
 
   if [ "${parallelization}" == "mpi" -a "${partitioning}" == "flat" ]; then
       args="${curr_input_file_name} ${number_of_partitions} 1 ${number_of_partitions}"
+  elif [ "${parallelization}" == "hpx" ]; then
+      num_numa=$(( ${sockets_per_node}*${nodes[i]} ))
+      args="${curr_input_file_name} ${number_of_partitions} ${num_numa}"
   else
       num_sockets=$((${sockets_per_node}*${nodes[i]}))
       args="${curr_input_file_name} ${number_of_partitions} ${num_sockets} ${ranks_per_socket}"
@@ -78,8 +81,8 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   commands="${commands}${path_to_build_tree}/partitioner/partitioner ${args} &"$'\n'
 
 done
-
+commands="${commands}wait"
 job_name="part_${node_type}"
-submit_stampede2-skx_serial "${job_name}" 24:00:00 "${commands}"
+submit_stampede2-skx_serial "${job_name}" 12:00:00 "${commands}"
 
 cd ${script_dir}

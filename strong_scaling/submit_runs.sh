@@ -3,7 +3,7 @@
 source config.sh
 check_inputs
 
-echo "Generating all meshes for strong scaling study"
+echo "Running all jobs for strong scaling study"
 echo ""
 echo "Path to build tree: " ${path_to_build_tree}
 echo "Path to mesh locations: " ${path_to_mesh_locations}
@@ -41,11 +41,26 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   job_name="dgswemv2_${parallelization}_${n}"
 
   args="${parallelized_file_name}"
-  commands="ibrun tacc_affinity ${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_OMPI ${args}"
-  mpi_ranks=$((${cores_per_socket}*${sockets_per_node}*${nodes[i]}))
+  #extra arguments for hpx
+  if [ "${parallelization}" == "hpx" ]; then
+      args="${args}  --hpx:threads=${cores_per_socket}" #--hpx:print-counter=/threads/time/average --hpx:print-counter=/threads/time/average-overhead --hpx:print-counter=/threads/time/overall"
+  fi
 
-  echo "Submitting script for mpi run with n = ${nodes[i]}"
-  ${launcher} "${job_name}" 01:00:00 ${nodes[i]} ${mpi_ranks} "${commands}"
+  #specify parallelization specific submission parameters
+  if [ "${parallelization}" == "hpx" ]; then
+      executable="MANUFACTURED_SOLUTION_HPX"
+      processes=$(( ${nodes[i]}*${sockets_per_node} ))
+  elif [ "${parallelization}" == "mpi" ]; then
+      executable="MANUFACTURED_SOLUTION_OMPI"
+      processes=$((${cores_per_socket}*${sockets_per_node}*${nodes[i]}))
+  fi
+
+  launcher="submit_stampede2-${node_type}_parallel"
+
+  commands="ibrun tacc_affinity ${path_to_build_tree}/examples/${executable} ${args}"
+
+  echo "Submitting script for ${parallelization} run with n = ${nodes[i]}"
+  ${launcher} "${job_name}" 01:00:00 ${nodes[i]} ${processes} "${commands}"
 done
 
 cd ${script_dir}
