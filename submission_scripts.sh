@@ -90,7 +90,7 @@ fi
 cat > slurm.sub <<EOL
 #!/bin/bash
 #--------------------------------------------
-# Scripts generated for serial submission of
+# Scripts generated for parallel submission of
 # SLURM script on TACC's Stampede2 cluster
 #--------------------------------------------
 
@@ -112,7 +112,7 @@ echo "${5}" >> slurm.sub
 
 echo "Submitting job..."
 cat slurm.sub
-#sbatch slurm.sub
+sbatch slurm.sub
 }
 
 #submit_stampede2-skx_serial generates temporary slurm submission files and submits them
@@ -171,7 +171,7 @@ fi
 cat > slurm.sub <<EOL
 #!/bin/bash
 #--------------------------------------------
-# Scripts generated for serial submission of
+# Scripts generated for parallel submission of
 # SLURM script on TACC's Stampede2 cluster
 #--------------------------------------------
 
@@ -193,5 +193,5 @@ echo "${5}" >> slurm.sub
 
 echo "Submitting job..."
 cat slurm.sub
-#sbatch slurm.sub
+sbatch slurm.sub
 }
