@@ -1,19 +1,23 @@
 #!/bin/bash
 
 source config.sh
+check_inputs
 
-if [ ! ${#nodes[@]} -eq ${#submeshes[@]} ]; then
-  echo "Error: the size of arrays nodes and submshes are not equal"
-  exit 1
-fi
-
-echo "Generating all meshes for weak scaling study"
+echo "Generating all meshes for strong scaling study"
 echo ""
 echo "Path to build tree: " ${path_to_build_tree}
 echo "Path to mesh locations: " ${path_to_mesh_locations}
 echo "Path to run directory: " ${path_to_run_directory}
+echo ""
+echo "Node Type: " ${node_type}
 echo "Nodes: " ${nodes}
+echo "Sockets per node: " ${sockets_per_node}
+echo "Cores per socket: " ${cores_per_socket}
+echo ""
 echo "Submesh sizes: " ${submeshes}
+echo ""
+echo "Parallelization: " ${parallelization}
+echo "Partitioning strategy: " ${partitioning}
 echo ""
 echo "Press enter to continue with these setting (or ctrl-c to exit)."
 
@@ -26,24 +30,30 @@ source ../submission_scripts.sh
 script_dir=${PWD}
 
 set -e
-for m in "${submeshes[@]}"; do
-  if [ ! -d "${path_to_mesh_locations}/${m}" ]; then
-    mkdir ${path_to_mesh_locations}/${m}
-  fi
+commands=""
+for ((i=0; i < "${#nodes[@]}"; ++i)); do
+    n=${nodes[i]}
+    m=${submeshes[i]}
 
-  if [ ! -d "${path_to_run_directory}/${m}" ]; then
-    mkdir ${path_to_run_directory}/${m}
-  fi
-  echo "Submitting script for mesh with ${m} partitions"
+    curr_run_dir=${path_to_run_directory}/${node_type}/${parallelization}_${partitioning}/${n}
+    curr_mesh_dir=${path_to_mesh_locations}/${node_type}/${parallelization}_${partitioning}/${n}
 
-  #go to script dir to all for relative paths to work
-  cd ${script_dir}
-  cd ${path_to_run_directory}/${m}
-  job_name="gen_${m}"
+    mkdir -p ${curr_run_dir}
+    mkdir -p ${curr_mesh_dir}
 
-  commands="cd ${path_to_mesh_locations}/${m}"$'\n'"${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${m} ${m}"
-
-  submit_stampede2_serial "${job_name}" 24:00:00 "${commands}"
+    tmp=$(cat <<EOF
+cd ${curr_mesh_dir}
+${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${m} ${m} &
+EOF
+)
+    commands="${commands}"$'\n'$'\n'"${tmp}"
 done
+commands="${commands}"$'\n'"wait"
+
+echo "${commands}"
+#just run the job instead of submitting it
+eval "${commands}"
+#job_name="gen_${node_type}"
+#submit_stampede2-knl_serial "${job_name}" 1:00:00 "${commands}"
 
 cd ${script_dir}

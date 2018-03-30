@@ -1,33 +1,31 @@
 #!/bin/bash
 
 source config.sh
-
-#check that the length of nodes and submeshes are equal
-if [ ! ${#nodes[@]} -eq ${#submeshes[@]} ]; then
-  echo "Error: the size of arrays nodes and submshes are not equal"
-  exit 1
-fi
+check_inputs
 
 #check that input_file_name exists in path_to_run_directory
-if [ ! -f ${path_to_run_directory}/${input_file_name} ]; then
-  echo "Error: could not find ${input_file_name} in ${path_to_run_directory}"
+if [ ! -f ${path_to_fort15}/${input_file_name} ]; then
+  echo "Error: could not find ${input_file_name} in ${path_to_fort15}"
   exit 1
 fi
+
 master_input_file="${path_to_run_directory}/${input_file_name}"
 
-echo "Partitioning all meshes for weak scaling study"
+echo "Partitioning all meshes for strong scaling study"
 echo ""
 echo "Path to build tree: " ${path_to_build_tree}
 echo "Path to mesh locations: " ${path_to_mesh_locations}
 echo "Path to run directory: " ${path_to_run_directory}
+echo ""
+echo "Node Type: " ${node_type}
 echo "Nodes: " ${nodes}
+echo "Sockets per node: " ${sockets_per_node}
+echo "Cores per socket: " ${cores_per_socket}
+echo ""
 echo "Submesh sizes: " ${submeshes}
 echo ""
-echo "Partitioner inputs:"
-echo "Input file name: " ${input_file_name}
-echo "Ranks per locality: " ${ranks_per_locality}
-echo "Cores per locality: " ${cores_per_locality}
-echo "Submeshes per thread: " ${submeshes_per_thread}
+echo "Parallelization: " ${parallelization}
+echo "Partitioning strategy: " ${partitioning}
 echo ""
 echo "Press enter to continue with these setting (or ctrl-c to exit)."
 
@@ -40,33 +38,51 @@ source ../submission_scripts.sh
 script_dir=${PWD}
 
 set -e
+commands=""
 for ((i=0; i < "${#nodes[@]}"; ++i)); do
-  m=${submeshes[i]};
-  if [ ! -d "${path_to_mesh_locations}/${m}" ]; then
-    mkdir ${path_to_mesh_locations}/${m}
-  fi
+    n=${nodes[i]}
+    m=${submeshes[i]};
 
-  if [ ! -d "${path_to_run_directory}/${m}" ]; then
-    mkdir ${path_to_run_directory}/${m}
-  fi
+    curr_run_dir=${path_to_run_directory}/${node_type}/${parallelization}_${partitioning}/${n}
+    curr_mesh_dir=${path_to_mesh_locations}/${node_type}/${parallelization}_${partitioning}/${n}
 
-  #go to script dir to all for relative paths to work
-  cd ${script_dir}
-  cd ${path_to_run_directory}/${m}
-  job_name="part_${m}"
+    mkdir -p ${curr_run_dir}
+    mkdir -p ${curr_mesh_dir}
 
-  #copy master input file into the run directories
-  cp ${master_input_file} .
-  line="file_name: ${path_to_mesh_locations}/${m}/rectangular_mesh.14"
-  sed -i "/file_name/c\  ${line}" ${input_file_name}
+    curr_mesh_file=${curr_mesh_dir}/${mesh_file_name}
+    if [ ! -f ${curr_mesh_file} ]; then
+	echo "Error:could not find ${mesh_file_name} in ${curr_mesh_dir}"
+	exit 1
+    fi
 
-  number_of_partitions=$((${cores_per_locality}*${submeshes_per_thread}*${nodes[i]}))
-  args="${input_file_name} ${number_of_partitions} ${nodes[i]} ${ranks_per_locality}"
-  commands="${path_to_build_tree}/partitioner/partitioner ${args}"
+    #copy master input file into the run directories
+    cd ${curr_run_dir}
+    cp ${master_input_file} .
+
+    curr_input_file_name=${curr_run_dir}/${input_file_name}
+
+    line="file_name: ${curr_mesh_file}"
+    sed -i "/file_name/c\  ${line}" ${input_file_name}
+
+    num_sockets=$((${sockets_per_node}*${n}))
+    number_of_partitions=$((${submeshes_per_rank}*${ranks_per_socket}*${num_sockets}))
 
 
-  echo "Submitting script for meshpartitioning with m = ${submeshes[i]}"
-  submit_stampede2_serial "${job_name}" 24:00:00 "${commands}"
+    if [ "${partitioning}" == "flat" ]; then
+	if [ "${parallelization}" == "mpi" ]; then
+	    args="${curr_input_file_name} ${number_of_partitions} 1 ${number_of_partitions}"
+	else #${parallelization} == hpx
+	    args="${curr_input_file_name} ${number_of_partitions} 1 ${num_sockets}"
+	fi
+    else #${partitioning} == "hierarch"
+	args="${curr_input_file_name} ${number_of_partitions} ${num_sockets} ${ranks_per_socket}"
+    fi
+
+    commands="${commands}${path_to_build_tree}/partitioner/partitioner ${args} &"$'\n'
+
 done
+commands="${commands}wait"
+job_name="part_${parallelization}_${node_type}"
+submit_stampede2-skx_serial "${job_name}" 12:00:00 "${commands}"
 
 cd ${script_dir}

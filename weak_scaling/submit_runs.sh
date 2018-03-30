@@ -1,26 +1,23 @@
 #!/bin/bash
 
 source config.sh
-
-#check that the length of nodes and submeshes are equal
-if [ ! ${#nodes[@]} -eq ${#submeshes[@]} ]; then
-  echo "Error: the size of arrays nodes and submshes are not equal"
-  exit 1
-fi
+check_inputs
 
 echo "Submitting all hpx runs for weak scaling study"
 echo ""
 echo "Path to build tree: " ${path_to_build_tree}
 echo "Path to mesh locations: " ${path_to_mesh_locations}
 echo "Path to run directory: " ${path_to_run_directory}
+echo ""
+echo "Node Type: " ${node_type}
 echo "Nodes: " ${nodes}
+echo "Sockets per node: " ${sockets_per_node}
+echo "Cores per socket: " ${cores_per_socket}
+echo ""
 echo "Submesh sizes: " ${submeshes}
 echo ""
-echo "Run inputs:"
-echo "Input file name: " ${input_file_name}
-echo "Ranks per locality: " ${ranks_per_locality}
-echo "Cores per locality: " ${cores_per_locality}
-echo "Submeshes per thread: " ${submeshes_per_thread}
+echo "Parallelization: " ${parallelization}
+echo "Partitioning strategy: " ${partitioning}
 echo ""
 echo "Press enter to continue with these setting (or ctrl-c to exit)."
 
@@ -34,26 +31,40 @@ script_dir=${PWD}
 
 set -e
 for ((i=0; i < "${#nodes[@]}"; ++i)); do
-  m=${submeshes[i]};
-  if [ ! -d "${path_to_mesh_locations}/${m}" ]; then
-    mkdir ${path_to_mesh_locations}/${m}
+  n=${nodes[i]};
+
+  curr_run_dir=${path_to_run_directory}/${node_type}/${parallelization}_${partitioning}/${n}
+
+  curr_input_file=${curr_run_dir}/${parallelized_file_name}
+
+  #check that input_file_name exists in path_to_run_directory
+  if [ ! -f ${curr_input_file} ]; then
+      echo "Error: could not find ${parallelized_file_name} in ${curr_run_dir}"
+      exit 1
   fi
 
-  if [ ! -d "${path_to_run_directory}/${m}" ]; then
-    mkdir ${path_to_run_directory}/${m}
+  cd ${curr_run_dir}
+  job_name="dgswemv2_${parallelization}_${n}"
+
+  args="${curr_input_file}"
+  if [ "${parallelization}" == "hpx" ]; then
+      args="${args} --hpx:threads=${cores_per_socket}"
   fi
 
-  #go to script dir to all for relative paths to work
-  cd ${script_dir}
-  cd ${path_to_run_directory}/${m}
-  job_name="dgswemv2_mpi_${m}"
+  if [ "${parallelization}" == "hpx" ]; then
+      executable="${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_HPX"
+      processes=$(( ${n}*${sockets_per_node} ))
+  elif [ "${parallelization}" == "mpi" ]; then
+      executable="${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_OMPI"
+      processes=$((${cores_per_socket}*${sockets_per_node}*${n}))
+  fi
 
-  args="${parallelized_file_name}"
-  commands="ibrun tacc_affinity ${path_to_build_tree}/examples/MANUFACTURED_SOLUTION_OMPI ${args}"
-  mpi_ranks=$((${nodes[i]}*${ranks_per_locality}))
+  launcher="submit_stampede2-${node_type}_parallel"
 
-  echo "Submitting script for hpx run with m = ${submeshes[i]}"
-  submit_stampede2_parallel "${job_name}" 01:00:00 ${nodes[i]} ${mpi_ranks} "${commands}"
+  commands="ibrun tacc_affinity ${executable} ${args}"
+
+  echo "Submitting script for ${parallelization} run with ${n} nodes"
+  ${launcher} "${job_name}" 01:00:00 ${n} ${processes} "${commands}"
 done
 
 cd ${script_dir}
