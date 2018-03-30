@@ -40,6 +40,11 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   cd ${path_to_run_directory}/${node_type}/${parallelization}_${partitioning}/${n}
   job_name="dgswemv2_${parallelization}_${n}"
 
+  if [ ! -f ${parallelized_file_name} ]; then
+      echo "Error: could not find ${parallelized_file_name} in ${PWD}"
+      exit 1
+  fi
+
   args="${parallelized_file_name}"
   #extra arguments for hpx
   if [ "${parallelization}" == "hpx" ]; then

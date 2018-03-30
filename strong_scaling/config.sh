@@ -2,7 +2,7 @@
 
 node_type="skx" #knl or skx
 parallelization="hpx" #hpx or mpi
-partitioning="hierarch"
+partitioning="hierarch" #hierarch or flat
 
 # HPX configuration
 path_to_build_tree=${WORK}/dgswemv2/build_release_${node_type}
@@ -53,6 +53,12 @@ function check_inputs {
     if [ "${parallelization}" != "hpx" ] && [ "${parallelization}" != "mpi" ]; then
 	echo "Error: parallelization set to: ${parallelization}"
 	echo "       Only current valid options are: hpx, mpi"
+	error=1
+    fi
+
+    if [ "${partitioning}" != "flat" ] && [ "${partitioning}" != "hierarch" ]; then
+	echo "Error: partitioning set to: ${partitioning}"
+	echo "       Only current valid options are: flat, hierarch"
 	error=1
     fi
 

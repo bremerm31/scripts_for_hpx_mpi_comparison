@@ -67,15 +67,16 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   line="file_name: ${curr_mesh_dir}/rectangular_mesh.14"
   sed -i "/file_name/c\  ${line}" ${input_file_name}
 
-  number_of_partitions=$((${submeshes_per_rank}*${ranks_per_socket}*${sockets_per_node}*${nodes[i]}))
+  num_sockets=$(( ${sockets_per_node}*${n} ))
+  number_of_partitions=$((${submeshes_per_rank}*${ranks_per_socket}*${num_sockets}))
 
-  if [ "${parallelization}" == "mpi" -a "${partitioning}" == "flat" ]; then
-      args="${curr_input_file_name} ${number_of_partitions} 1 ${number_of_partitions}"
-  elif [ "${parallelization}" == "hpx" ]; then
-      num_numa=$(( ${sockets_per_node}*${nodes[i]} ))
-      args="${curr_input_file_name} ${number_of_partitions} ${num_numa}"
-  else
-      num_sockets=$((${sockets_per_node}*${nodes[i]}))
+  if [ "${partitioning}" == "flat" ]; then
+      if [ "${parallelization}" == "mpi" ]; then
+	  args="${curr_input_file_name} ${number_of_partitions} 1 ${number_of_partitions}"
+      else #${parallelization} == hpx
+	  args="${curr_input_file_name} ${number_of_partitions} 1 ${num_sockets}"
+      fi
+  else #${partitioning} == "hierarch"
       args="${curr_input_file_name} ${number_of_partitions} ${num_sockets} ${ranks_per_socket}"
   fi
   commands="${commands}${path_to_build_tree}/partitioner/partitioner ${args} &"$'\n'
