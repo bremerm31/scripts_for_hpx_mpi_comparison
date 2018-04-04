@@ -61,7 +61,7 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
 
   launcher="submit_stampede2-${node_type}_parallel"
 
-  commands="ibrun tacc_affinity ${executable} ${args}"
+  commands="ibrun ${executable} ${args}"
 
   echo "Submitting script for ${parallelization} run with ${n} nodes"
   ${launcher} "${job_name}" 01:00:00 ${n} ${processes} "${commands}"
