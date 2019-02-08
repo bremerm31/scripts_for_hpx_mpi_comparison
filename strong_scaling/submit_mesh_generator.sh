@@ -25,9 +25,6 @@ read answer
 #Add slurm submission functions
 source ../submission_scripts.sh
 
-#Get current dir
-script_dir=${PWD}
-
 set -e
 
 echo "Submitting script for mesh with ${submeshes} partitions"
@@ -41,10 +38,11 @@ job_name="gen_${submeshes}_${node_type}"
 
 mkdir -p ${path_to_mesh_locations}
 mkdir -p ${path_to_run_directory}
-commands="cd ${path_to_mesh_locations} && ${path_to_build_tree}/mesh_generators/rectangular_mesh_generator ${submeshes} ${submeshes}"
+
+cp ${scripts_dir}/sample_files/mesh_generator_input.yml ${path_to_mesh_locations}
+
+commands="cd ${path_to_mesh_locations} && ${WORK}/dgswemv2/build_release_skx/mesh_generators/rectangular_mesh_generator mesh_generator_input.yml"
 
 echo ${commands}
-${commands}
+eval ${commands}
 #submit_stampede2-knl_serial "${job_name}" 24:00:00 "${commands}"
-
-cd ${script_dir}

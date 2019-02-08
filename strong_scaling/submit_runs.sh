@@ -36,7 +36,6 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   n=${nodes[i]};
 
   #go to script dir to all for relative paths to work
-  cd ${script_dir}
   cd ${path_to_run_directory}/${node_type}/${parallelization}_${partitioning}/${n}
   job_name="dgswemv2_${parallelization}_${n}"
 
@@ -48,24 +47,23 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   args="${parallelized_file_name}"
   #extra arguments for hpx
   if [ "${parallelization}" == "hpx" ]; then
-      args="${args}  --hpx:threads=${cores_per_socket}" #--hpx:print-counter=/threads/time/average --hpx:print-counter=/threads/time/average-overhead --hpx:print-counter=/threads/time/overall"
+      args="${args}  --hpx:threads=${cores_per_socket}"
+  #    args="${args}  --hpx:threads=${cores_per_socket} --hpx:print-counter=/threads/time/average --hpx:print-counter=/threads/time/average-overhead"
   fi
 
   #specify parallelization specific submission parameters
   if [ "${parallelization}" == "hpx" ]; then
-      executable="MANUFACTURED_SOLUTION_HPX"
+      executable="dgswemv2-hpx"
       processes=$(( ${nodes[i]}*${sockets_per_node} ))
   elif [ "${parallelization}" == "mpi" ]; then
-      executable="MANUFACTURED_SOLUTION_OMPI"
+      executable="dgswemv2-ompi"
       processes=$((${cores_per_socket}*${sockets_per_node}*${nodes[i]}))
   fi
 
   launcher="submit_stampede2-${node_type}_parallel"
 
-  commands="ibrun ${path_to_build_tree}/examples/${executable} ${args}"
+  commands="ibrun ${path_to_build_tree}/source/${executable} ${args}"
 
   echo "Submitting script for ${parallelization} run with n = ${nodes[i]}"
   ${launcher} "${job_name}" 01:00:00 ${nodes[i]} ${processes} "${commands}"
 done
-
-cd ${script_dir}

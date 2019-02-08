@@ -15,6 +15,7 @@ if [ ! -f ${path_to_mesh_locations}/${mesh_file_name} ]; then
 fi
 master_input_file="${path_to_fort15}/${input_file_name}"
 master_mesh_file="${path_to_mesh_locations}/${mesh_file_name}"
+master_bcis_file="${path_to_mesh_locations}/${bcis_file_name}"
 
 echo "Generating all meshes for strong scaling study"
 echo ""
@@ -37,10 +38,7 @@ echo "Press enter to continue with these setting (or ctrl-c to exit)."
 read answer
 
 #Add slurm submission functions
-source ../submission_scripts.sh
-
-#Get current dir
-script_dir=${PWD}
+source ${scripts_dir}/submission_scripts.sh
 
 set -e
 commands=""
@@ -54,17 +52,16 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   mkdir -p ${curr_mesh_dir}
 
   #go to script dir to all for relative paths to work
-  cd ${script_dir}
-
   cd ${curr_run_dir}
 
   #copy master input file into the run directories
   cp ${master_input_file} .
   cp ${master_mesh_file} ${curr_mesh_dir}
+  cp ${master_bcis_file} ${curr_mesh_dir}
   curr_input_file_name=${curr_run_dir}/${input_file_name}
 
 
-  line="file_name: ${curr_mesh_dir}/rectangular_mesh.14"
+  line="file_name: ${curr_mesh_dir}/inlet.14"
   sed -i "/file_name/c\  ${line}" ${input_file_name}
 
   num_sockets=$(( ${sockets_per_node}*${n} ))
@@ -79,11 +76,14 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   else #${partitioning} == "hierarch"
       args="${curr_input_file_name} ${number_of_partitions} ${num_sockets} ${ranks_per_socket}"
   fi
-  commands="${commands}${path_to_build_tree}/partitioner/partitioner ${args} &"$'\n'
+  partitioner_exe="${WORK}/dgswemv2/build_release_skx/partitioner/partitioner"
+  commands="${commands}${partitioner_exe} ${args} &"$'\n'
 
 done
 commands="${commands}wait"
 job_name="part_${node_type}"
-submit_stampede2-skx_serial "${job_name}" 12:00:00 "${commands}"
 
-cd ${script_dir}
+echo ${commands}
+eval ${commands}
+
+#submit_stampede2-skx_serial "${job_name}" 12:00:00 "${commands}"
