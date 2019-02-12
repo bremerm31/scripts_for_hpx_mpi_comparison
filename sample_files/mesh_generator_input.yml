@@ -17,8 +17,9 @@ y2: 45000
 
 # We then determine the number of element edges along each edge
 
-num_x_subdivisions: 1024
-num_y_subdivisions: 512
+num_x_subdivisions: 1448
+num_y_subdivisions: 724
+
 # The next step is to determine the pattern
 #  (0) simple pattern
 #  (1) zigzag pattern
