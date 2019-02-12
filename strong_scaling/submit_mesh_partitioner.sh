@@ -76,7 +76,7 @@ for ((i=0; i < "${#nodes[@]}"; ++i)); do
   else #${partitioning} == "hierarch"
       args="${curr_input_file_name} ${number_of_partitions} ${num_sockets} ${ranks_per_socket}"
   fi
-  partitioner_exe="${WORK}/dgswemv2/build_release_skx/partitioner/partitioner"
+  partitioner_exe="${path_to_dgswemv2}/build_release_skx-old/partitioner/partitioner"
   commands="${commands}${partitioner_exe} ${args} &"$'\n'
 
 done

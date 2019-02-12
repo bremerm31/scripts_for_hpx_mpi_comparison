@@ -5,11 +5,12 @@ parallelization="hpx" #hpx or mpi
 partitioning="hierarch" #hierarch or flat
 
 # HPX configuration
-path_to_build_tree=/work/02578/bremer/stampede2/dgswemv2/build_release_${node_type}
+path_to_dgswemv2=/work/02578/bremer/stampede2/dgswemv2
+path_to_build_tree=${path_to_dgswemv2}/build_release_${node_type}-old
 path_to_mesh_locations=${SCRATCH}/hpx_v_mpi_redux/strong_scaling
 path_to_run_directory=${WORK}/hpx_v_mpi_redux/strong_scaling
 declare -a nodes=(1 2 4 8 16 32 64)
-submeshes=512
+submeshes=1024
 
 #partitioner arguments
 #input_fie_name should be located in path_to_run_directory

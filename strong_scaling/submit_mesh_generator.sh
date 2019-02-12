@@ -41,7 +41,7 @@ mkdir -p ${path_to_run_directory}
 
 cp ${scripts_dir}/sample_files/mesh_generator_input.yml ${path_to_mesh_locations}
 
-commands="cd ${path_to_mesh_locations} && ${WORK}/dgswemv2/build_release_skx/mesh_generators/rectangular_mesh_generator mesh_generator_input.yml"
+commands="cd ${path_to_mesh_locations} && ${path_to_dgswemv2}/build_release_skx-old/mesh_generators/rectangular_mesh_generator mesh_generator_input.yml"
 
 echo ${commands}
 eval ${commands}
