@@ -58,7 +58,8 @@ cat > slurm.sub <<EOL
 
 #SBATCH -A TG-DMS080016N         # Specify allocation to charge against
 
-module load gcc
+module purge
+module load gcc/7.1.0 boost/1.64 mkl/17.0.4 impi/17.0.3
 
 EOL
 
@@ -104,7 +105,8 @@ cat > slurm.sub <<EOL
 
 #SBATCH -A TG-DMS080016N         # Specify allocation to charge against
 
-module load gcc
+module purge
+module load gcc/7.1.0 boost/1.64 mkl/17.0.4 impi/17.0.3
 
 EOL
 
@@ -139,7 +141,8 @@ cat > slurm.sub <<EOL
 
 #SBATCH -A TG-DMS080016N         # Specify allocation to charge against
 
-module load gcc
+module purge
+module load gcc/7.1.0 boost/1.64 mkl/17.0.4 impi/17.0.3
 
 EOL
 
@@ -185,7 +188,8 @@ cat > slurm.sub <<EOL
 
 #SBATCH -A TG-DMS080016N         # Specify allocation to charge against
 
-module load gcc
+module purge
+module load gcc/7.1.0 boost/1.64 mkl/17.0.4 impi/17.0.3
 
 EOL
 
